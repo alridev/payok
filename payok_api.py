@@ -9,21 +9,22 @@ __all__ = [
 ]
 __version__ = "0.1"
 __author__ = "except - lolz.guru/members/2977610"
+
 import hashlib
 import urllib.parse
-
 import requests
-
-
+from typing import Union
 
 def getBalance(
         API_ID: int,
-        API_KEY: str
-    ) -> dict[float,float]:
+        API_KEY: str,
+        timeout: Union[float, tuple] = None
+    ) -> dict[str,float]:
     """
     Args:
         API_ID (int): ID вашего ключа API
         API_KEY (str): Ваш ключ API
+        timeout (float|tuple, optional): Время ожидания ответа в формате requests. Defaults to None
 
     Answer (dict):
         balance (str(float)): Основной баланс кошелька.
@@ -50,7 +51,8 @@ def getBalance(
     }
     response = requests.post(
         url,
-        data
+        data,
+        timeout = timeout
     ).json()
 
     try:
@@ -70,7 +72,8 @@ def getTransaction(
         API_KEY: str,
         shop: int,
         payment = None,
-        offset: int = None
+        offset: int = None,
+        timeout: Union[float, tuple] = None
     ) -> dict:
     """
     Args:
@@ -79,6 +82,7 @@ def getTransaction(
         shop (int): ID магазина
         payment (optional): ID платежа в вашей системе
         offset (int, optional): Отступ, пропуск указанного количества строк
+        timeout (float|tuple, optional): Время ожидания ответа в формате requests. Defaults to None
 
     Raises:
         Exception
@@ -99,7 +103,8 @@ def getTransaction(
     }
     response = requests.post(
         url,
-        data
+        data,
+        timeout = timeout
     ).json()
     if response["status"] == "success":
         return response
@@ -113,7 +118,8 @@ def getPayout(
         API_ID: int,
         API_KEY: str,
         payout_id: int = None,
-        offset: int = None
+        offset: int = None,
+        timeout: Union[float, tuple] = None
     ) -> dict:
     """
     Args:
@@ -121,6 +127,7 @@ def getPayout(
         API_KEY (str): Ваш ключ API
         payout_id (int, optional): 	ID выплаты в системе Payok
         offset (int, optional): Отступ, пропуск указанного количества строк
+        timeout (float|tuple, optional): Время ожидания ответа в формате requests. Defaults to None
 
     Raises:
         Exception
@@ -140,7 +147,8 @@ def getPayout(
     }
     response = requests.post(
         url,
-        data
+        data,
+        timeout = timeout
     ).json()
     if response["status"] == "success":
         return response
@@ -156,7 +164,8 @@ def createPayout(
         method: str,
         reciever: str,
         comission_type: str,
-        webhook_url: str = None
+        webhook_url: str = None,
+        timeout: Union[float, tuple] = None
     ) -> dict:
     """
     Args:
@@ -166,7 +175,8 @@ def createPayout(
         method (str): Специальное значение метода выплаты, список значений
         reciever (str): Реквизиты получателя выплаты
         comission_type (str): Тип расчета комиссии: balance - Комиссия с баланса; payment - Комиссия с платежа
-        webhook_url (str, optional): URL для отправки Webhook при смене статуса выплаты. Defaults to None.
+        webhook_url (str, optional): URL для отправки Webhook при смене статуса выплаты. Defaults to None
+        timeout (float|tuple, optional): Время ожидания ответа в формате requests. Defaults to None
 
     Raises:
         Exception
@@ -188,7 +198,8 @@ def createPayout(
     }
     response = requests.post(
         url,
-        data
+        data,
+        timeout = timeout
     ).json()
     if response["status"] == "success":
         return response
@@ -208,7 +219,7 @@ def createPay(
     success_url: str = None,
     method: str = None,
     lang: str = None,
-    custom = None,
+    custom = None
     ) -> str:
     """
     Args:
@@ -243,9 +254,17 @@ def createPay(
             )
         ).encode("utf-8")
     ).hexdigest()
-    desc = urllib.parse.quote_plus(desc)
-    success_url= urllib.parse.quote_plus(success_url)
-    lang = urllib.parse.quote_plus(lang)
-    url = f"https://payok.io/pay?amount={amount}&payment={payment}&desc={desc}&shop={shop}&sign={sign}&email={email}&success_url=&method={method}&customparam={custom}"
+    url = f"https://payok.io/pay?amount={amount}&payment={payment}&shop={shop}&desc={desc}&currency={currency}&sign={sign}"
+    if email:
+        url += f"&email={email}"
+    if success_url:
+        success_url = urllib.parse.quote_plus(success_url)
+        url += f"&success_url={success_url}"
+    if method:
+        url += f"&method={method}"
+    if lang:
+        url += f"&lang={lang}"
+    if custom:
+        url += f"&customparam={custom}"
     return url
 
